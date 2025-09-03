@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+psycopg2-binary
+requests
+python-jose[cryptography]
+authlib
+python-dotenv
