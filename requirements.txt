@@ -6,3 +6,6 @@ requests
 python-jose[cryptography]
 authlib
 python-dotenv
+PyPDF2
+python-multipart
+pydantic
