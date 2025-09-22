@@ -52,3 +52,22 @@ class ResumeResponse(BaseModel):
 class AnalysisRequests(BaseModel):
     job_description:Optional[str]=None
     improvement_focus:Optional[str]='general'
+
+#qwen configuration
+QWEN_API_URL = os.getenv('QWEN_API_URL','http://localhost:11434/api/generate')
+QWEN_MODEL = os.getenv('QWEN_MODEL', 'qwen2.5:7b-instruct')
+
+def extract_text_from_pdf(file_content:bytes) -> str:
+    pass 
+
+def call_qwen_llm(prompt:str) -> str: 
+    pass
+
+def create_improvement_prompt(resume_text:str, job_description:Optional[str] = None, focus:str = 'general') -> str:
+    pass
+
+
+
+
+
+    
