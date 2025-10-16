@@ -238,8 +238,51 @@ Optimize this resume to pass ATS screening:
    - Create a dedicated skills section with categorized skills
    - List skills exactly as they appear in job descriptions
    - Include both soft and technical skills relevant to the role
-""",
+"""
     }
+
+    base_prompt += focus_instruction.get(focus,focus_instruction['general'])
+    base_prompt += """ INSTRUCTIONS:
+    1. Provide an improved version of the resume
+    2. Maintain all factual information
+    3. Improve language and presentation
+    4. Make it more impactful and professional
+    5. Ensure it's ATS-friendly 
+    OUTPUT FORMAT: Return ONLY the improved resume text, no additional commentary.""" 
+    return base_prompt
+
+@app.on_event('startup')
+def on_startup():
+    print('starting resume analyzer api')
+    create_db_and_tables()
+    test_connections()
+
+@app.get('/')
+def read_root():
+    return {
+        'message':'resume analyzer is running',
+        'version': '1.0.0',
+        'status': 'healthy'}
+
+
+@app.post('/user/', response_model = UserResponse, status_code = status.HTTP_201_CREATED)
+def create_user(user:UserCreate, session:Session = Depends(get_session)):
+    statement = select(User).where(User.email == user.email)
+    existing_user = session.exec(statement).first()
+
+    if existing_user:
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = 'user with the email already exitits')
+    
+    db_user = User(username = user.username, email = user.email)
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    return db_user
+
+
+    
+    
+    
 
 
 
