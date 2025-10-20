@@ -1,21 +1,25 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from typing import List, Optional
 import uvicorn
 import requests
-import json
 from pydantic import BaseModel
 import PyPDF2
 import io
 from datetime import datetime
-from database import engine, create_db_and_tables, get_session, test_connections
+from dotenv import load_dotenv
+
+from database import engine, create_db_and_tables, get_session, test_connection
 from models import User, Resume
 
+# Load environment variables
+load_dotenv()
+
 app = FastAPI(
-    title='Resume analyzer with Qwen llm',
-    description='api for improving resumes',
+    title='Resume Analyzer with Qwen LLM',
+    description='API for improving resumes',
     version='1.0.0'
 )
 
@@ -63,6 +67,7 @@ QWEN_API_URL = os.getenv('QWEN_API_URL', 'http://localhost:11434/api/generate')
 QWEN_MODEL = os.getenv('QWEN_MODEL', 'qwen2.5:7b-instruct')
 
 def extract_text_from_pdf(file_content: bytes) -> str:
+    """Extract text from PDF file"""
     try:
         pdf_file = io.BytesIO(file_content)
         pdf_reader = PyPDF2.PdfReader(pdf_file)
@@ -77,6 +82,7 @@ def extract_text_from_pdf(file_content: bytes) -> str:
         )
 
 def call_qwen_llm(prompt: str) -> str:
+    """Call Qwen LLM API"""
     try:
         payload = {
             'model': QWEN_MODEL,
@@ -96,6 +102,7 @@ def call_qwen_llm(prompt: str) -> str:
         )
 
 def create_improvement_prompt(resume_text: str, job_description: Optional[str] = None, focus: str = 'general') -> str:
+    """Create prompt for resume improvement"""
     base_prompt = f'''You are an expert resume writer and career coach. Analyze and improve the following resume for ATS compatibility and professional impact.
 
 Your expertise includes:
@@ -268,12 +275,14 @@ OUTPUT FORMAT: Return ONLY the improved resume text, no additional commentary or
 
 @app.on_event('startup')
 def on_startup():
-    print('Starting resume analyzer API...')
+    """Initialize application on startup"""
+    print('Starting Resume Analyzer API...')
     create_db_and_tables()
-    test_connections()
+    test_connection()
 
 @app.get('/')
 def read_root():
+    """Root endpoint with API information"""
     return {
         'message': 'Resume Analyzer API is running',
         'version': '1.0.0',
@@ -328,9 +337,9 @@ def get_user(user_id: int, session: Session = Depends(get_session)):
 # Resume Endpoints
 @app.post('/resumes/upload', response_model=ResumeResponse, status_code=status.HTTP_201_CREATED)
 async def upload_resume(
-    user_id: int,
+    user_id: int = Form(...),
     file: Optional[UploadFile] = File(None),
-    text: Optional[str] = None,
+    text: Optional[str] = Form(None),
     session: Session = Depends(get_session)
 ):
     """Upload a resume as PDF file or plain text"""
